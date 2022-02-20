@@ -1,4 +1,5 @@
 #### SCRIPT NOT WORKING!!! DEBUG BEFORE USING!!! ###
+### We were using the notebook for prediction ###
 import argparse
 
 parser = argparse.ArgumentParser()

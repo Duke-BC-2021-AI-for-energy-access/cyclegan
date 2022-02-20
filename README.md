@@ -12,7 +12,8 @@ The folder `colab-cyclegan-data`, containing training images, has been zipped an
 
 in one of the code blocks in the iPython notebook. The exclamation mark in the front tells the Jupyter notebook that this whole thing is a Linux shell command and should be interpreted as such. This should extract and make a folder called `colab-cyclegan-data`
 
-The `.ipynb` notebook was used for debugging. The Python scripts adapted from the notebooks were what were run ultimately.
+<!-- The `.ipynb` notebook was used for debugging. The Python scripts adapted from the notebooks were what were run ultimately. -->
+**IMPORTANT:** the predict script is not working. We used the `ipynb` file manually for predicting.
 
 ### Running cyclegan non-interactively
 
@@ -24,4 +25,4 @@ The `.ipynb` notebook was used for debugging. The Python scripts adapted from th
 
 `python train_wrapper.py`
 
-`python predict_wrapper.py`
+~~`python predict_wrapper.py`~~ `cyclegan.ipynb`
