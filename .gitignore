@@ -1,0 +1,6 @@
+colab-cyclegan-data
+*checkpoints
+pytorch-*
+output
+*.zip
+

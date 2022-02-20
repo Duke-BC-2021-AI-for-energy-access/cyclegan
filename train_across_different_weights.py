@@ -3,17 +3,18 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--source')
 parser.add_argument('--target')
+parser.add_argument('--forward_loss_weight')
 
 opt = parser.parse_args()
 
 '''
 A training script that encompasses what is done in cyclegan.ipynb as of Nov 21
 
-data.zip should be downloaded and extracted before running this script, using the method mentioned in the readme
+data.zip should be downloaded and extracted before running this script, using the method mentioned in the readme or colab
+As of now, the command is:
 
-Finally, a conda environment should be created for this script
+    wget -O data.zip https://duke.box.com/shared/static/5yfb0hgw6dphe3p9oexml8vfqncvjo2j ; unzip data.zip ; rm data.zip
 
-IMPORTANT: AS OF THE CURRENT VERSION, THIS SCRIPT DOESN'T RUN THE FULL SET OF DATASET PAIRS. NEED TO MODIFY THAT IN FULLY FLEDGED EXPERIMENT
 '''
 import tensorflow as tf
 
@@ -28,30 +29,33 @@ AUTOTUNE = tf.data.AUTOTUNE
 import numpy as np
 from PIL import Image
 
-############### USER PARAMETERS ###############
+############## USER SPECIFIED PARAMETERS #############
 BATCH_SIZE = 1
 IMG_WIDTH = 608
 IMG_HEIGHT = 608
 SOURCE_DATASET = opt.source
 TARGET_DATASET = opt.target
-###############################################
+#####################################################
 
-
-############# DATA FILE SPECIFICATION ###################
 src_folders = {
-    'NE': 'Train NE Val NW 100 real 75 syn',
-    'NW': 'Train NW Val NE 100 real 75 syn',
-    'EM': 'Train EM Val EM 100 real 75 syn',
+    'NE': 'Train NE Val NW 100 real 75 syn', 
+    'NW': 'Train NW Val NE 100 real 75 syn', 
+    'EM': 'Train EM Val EM 100 real 75 syn', 
     'SW': 'Train SW Val EM 100 real 75 syn'
     }
 
 # Globs the target images
+# currently uses only one as well
+## CHANGE WHEN FULL EXPERIMENT IS RUN
+
 import glob
 
 bg_folders = ['EM', 'NE', 'NW', 'SW']
 train_targ_filenames = glob.glob(f'colab-cyclegan-data/backgrounds/{TARGET_DATASET}/*')
 
 ## Gets the train_src_filenames from training_img_paths.txt. This current implementation only takes the txt file in the NE domain. 
+## CHANGE WHEN FULL EXPERIMENT IS RUN
+
 txt_file = './colab-cyclegan-data/' + src_folders[SOURCE_DATASET] + '/baseline/training_img_paths.txt'
 
 with open(txt_file) as f:
@@ -61,7 +65,6 @@ with open(txt_file) as f:
 
 train_src_filenames = lines
 del lines
-#############################################################
 
 import random
 random.shuffle(train_src_filenames)
@@ -70,8 +73,6 @@ random.shuffle(train_src_filenames)
 test_src_filenames = train_src_filenames[len(train_targ_filenames):] 
 train_src_filenames = train_src_filenames[:len(train_targ_filenames)]
 # print(train_src_filenames)
-
-###
 
 train_source = tf.data.Dataset.from_tensor_slices((train_src_filenames)) #75 train src images (from total 100)
 train_target = tf.data.Dataset.from_tensor_slices((train_targ_filenames)) # 75 total target background images

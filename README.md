@@ -1,13 +1,25 @@
 # cyclegan
 
+### Preface
+
+This repository contains the code to running cyclegan on the 2021 Bass Connections team's data. It is mostly adapted from [https://www.tensorflow.org/tutorials/generative/cyclegan].
+
 ### Data downloading:
 
-The folder BC_team_domain_experiment has been zipped and uploaded to box in case we need it for google colab. To get it, run
+The folder `colab-cyclegan-data`, containing training images, has been zipped and uploaded to box in case we need it for google colab. To get it, run
 
-`!wget -O data.zip https://duke.box.com/shared/static/e25jyupdx5jlsl7d3bskshhdegpuvitu.zip ; unzip data.zip ; rm data.zip`
+`!wget -O data.zip https://duke.box.com/shared/static/5yfb0hgw6dphe3p9oexml8vfqncvjo2j -O data.zip ; unzip data.zip ; rm data.zip`
 
-in one of the code blocks in the iPython notebook. The exclamation mark in the front tells the jupyter notebook that this whole thing is a linux shell command and should be interpreted as such.
+in one of the code blocks in the iPython notebook. The exclamation mark in the front tells the Jupyter notebook that this whole thing is a Linux shell command and should be interpreted as such. This should extract and make a folder called `colab-cyclegan-data`
 
 ### Running cyclegan non-interactively
 
-First create a conda environment using the packages in `tf-gpu-env.yml`, and then run train.py after modifying the necessary parameters (most likely the input and output datasets and the number of training epochs).
+(Download `colab-cyclegan-data` through the method above if you haven't already)
+
+`conda env create -f cyclegan.yml`
+
+`conda activate cyclegan`
+
+`python train_wrapper.py`
+
+`python predict_wrapper.py`
