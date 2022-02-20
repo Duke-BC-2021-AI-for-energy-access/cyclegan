@@ -11,9 +11,7 @@ A training script that encompasses what is done in cyclegan.ipynb as of Nov 21
 
 data.zip should be downloaded and extracted before running this script, using the method mentioned in the readme
 
-Finally, a conda environment should be created for this script
-
-IMPORTANT: AS OF THE CURRENT VERSION, THIS SCRIPT DOESN'T RUN THE FULL SET OF DATASET PAIRS. NEED TO MODIFY THAT IN FULLY FLEDGED EXPERIMENT
+Finally, a conda environment should be created for this script based on cyclegan.yml
 '''
 import tensorflow as tf
 

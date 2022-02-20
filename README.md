@@ -12,6 +12,8 @@ The folder `colab-cyclegan-data`, containing training images, has been zipped an
 
 in one of the code blocks in the iPython notebook. The exclamation mark in the front tells the Jupyter notebook that this whole thing is a Linux shell command and should be interpreted as such. This should extract and make a folder called `colab-cyclegan-data`
 
+The `.ipynb` notebook was used for debugging. The Python scripts adapted from the notebooks were what were run ultimately.
+
 ### Running cyclegan non-interactively
 
 (Download `colab-cyclegan-data` through the method above if you haven't already)
