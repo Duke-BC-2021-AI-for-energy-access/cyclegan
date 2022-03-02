@@ -26,3 +26,9 @@ in one of the code blocks in the iPython notebook. The exclamation mark in the f
 `python train_wrapper.py`
 
 ~~`python predict_wrapper.py`~~ `cyclegan.ipynb`
+
+
+## TODO
+
+1. Make jitter cyclegan images
+

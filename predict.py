@@ -5,6 +5,8 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--source')
 parser.add_argument('--target')
+parser.add_argument('--source_num_imgs', default=100)
+parser.add_argument('--target_num_imgs', default=75)
 
 opt = parser.parse_args()
 
@@ -100,57 +102,52 @@ from PIL import Image
 
 train_horses, train_zebras = dataset['trainA'], dataset['trainB']
 test_horses, test_zebras = dataset['testA'], dataset['testB']'''
-
-# %%
-#BUFFER_SIZE = 1000
+############### USER PARAMETERS ###############
 BATCH_SIZE = 1
 IMG_WIDTH = 608
 IMG_HEIGHT = 608
-
-# %%
-# Download data (to change link)
-# !wget -O data.zip https://duke.box.com/shared/static/e25jyupdx5jlsl7d3bskshhdegpuvitu.zip ; unzip data.zip
-
-# %%
-
-# %%
-src_folders = {
-    'NE': 'Train NE Val NW 100 real 75 syn', 
-    'NW': 'Train NW Val NE 100 real 75 syn', 
-    'EM': 'Train EM Val EM 100 real 75 syn', 
-    'SW': 'Train SW Val EM 100 real 75 syn'
-    }
-
 SOURCE_DATASET = opt.source
+TARGET_DATASET = opt.target
+SOURCE_NUM_IMAGES = int(opt.source_num_imgs)
+TARGET_NUM_IMAGES = int(opt.target_num_imgs)
 
+print(f'Predict: src: {SOURCE_DATASET}, targ: {TARGET_DATASET}, src_n: {SOURCE_NUM_IMAGES}, targ_n: {TARGET_NUM_IMAGES}')
+###############################################
 # %%
 # Globs the target images
 # currently uses only one as well
 
 import glob
+# 
+# bg_folders = ['EM', 'NE', 'NW', 'SW']
+# TARGET_DATASET = opt.target
+# train_targ_filenames = glob.glob(f'colab-cyclegan-data/backgrounds/{TARGET_DATASET}/*')
+# 
+# 
+# # %%
+# ## Gets the train_src_filenames from training_img_paths.txt. This current implementation only takes the txt file in the NE domain. 
+# ## CHANGE WHEN FULL EXPERIMENT IS RUN
+# 
+# txt_file = './colab-cyclegan-data/' + src_folders[SOURCE_DATASET] + '/baseline/training_img_paths.txt'
+# with open(txt_file) as f:
+#   lines = f.readlines()
+#   lines = [l.strip() for l in lines]
+#   lines = ['colab-cyclegan-data' + l[2:] for l in lines]
+# 
+# train_src_filenames = lines
+# del lines
+# 
 
-bg_folders = ['EM', 'NE', 'NW', 'SW']
-TARGET_DATASET = opt.target
-train_targ_filenames = glob.glob(f'colab-cyclegan-data/backgrounds/{TARGET_DATASET}/*')
+train_src_filenames = glob.glob(f'/work/yl708/bass/cyclegan/colab-cyclegan-data/jitter/images/{SOURCE_DATASET}/Real/*.jpg')
+train_targ_filenames = glob.glob(f'/work/yl708/bass/cyclegan/colab-cyclegan-data/jitter/images/{TARGET_DATASET}/Background/*.jpg')
+all_src_filenames = train_src_filenames.copy()
 
-
-# %%
-## Gets the train_src_filenames from training_img_paths.txt. This current implementation only takes the txt file in the NE domain. 
-## CHANGE WHEN FULL EXPERIMENT IS RUN
-
-txt_file = './colab-cyclegan-data/' + src_folders[SOURCE_DATASET] + '/baseline/training_img_paths.txt'
-with open(txt_file) as f:
-  lines = f.readlines()
-  lines = [l.strip() for l in lines]
-  lines = ['colab-cyclegan-data' + l[2:] for l in lines]
-
-train_src_filenames = lines
-del lines
+train_src_filenames = train_src_filenames[:100]
+train_targ_filenames = train_targ_filenames[:70]
 
 import random
 random.shuffle(train_src_filenames)
 
-all_src_filenames = train_src_filenames.copy()
 # selects number of training images equal to the number of images in train_targ, and use the rest as test data
 test_src_filenames = train_src_filenames[len(train_targ_filenames):] 
 train_src_filenames = train_src_filenames[:len(train_targ_filenames)]
@@ -194,7 +191,7 @@ def normalize(image):
 
 # %%
 def random_jitter(image):
-  print(image)
+  # print(image)
   # resizing to 286 x 286 x 3
   image = tf.image.resize(image, [560, 560],
                           method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
@@ -396,7 +393,18 @@ discriminator_y_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
 # ## Checkpoints
 
 # %%
-checkpoint_path = f"./s_{SOURCE_DATASET}_t_{TARGET_DATASET}_checkpoints/train"
+# checkpoint_path = f"./s_{SOURCE_DATASET}_t_{TARGET_DATASET}_checkpoints/train"
+
+# ## JUST FOR NEW EXPERIMENTS TODO: REMOVE THIS
+# if SOURCE_DATASET == 'EM' and TARGET_DATASET == 'SW':
+#     checkpoint_path = f"./s_{SOURCE_DATASET}_t_{TARGET_DATASET}_sn_267_tn_358_checkpoints/train"
+# elif SOURCE_DATASET == 'SW' and TARGET_DATASET == 'EM':
+#     checkpoint_path = f"./s_{SOURCE_DATASET}_t_{TARGET_DATASET}_sn_190_tn_244_checkpoints/train"
+# else:
+#     raise Exception # Change this part of file before running
+
+## Using naming consistent with training script
+checkpoint_path = f"./s_{SOURCE_DATASET}_t_{TARGET_DATASET}_sn_{SOURCE_NUM_IMAGES}_tn_{TARGET_NUM_IMAGES}_checkpoints/train"
 
 ckpt = tf.train.Checkpoint(generator_g=generator_g,
                            generator_f=generator_f,
@@ -554,7 +562,8 @@ def save_generated_image(model, test_input, output_name):
 # %%
 idx = 0
 # Run the trained model on the test dataset
-folder_name = f'output/src_{SOURCE_DATASET}_targ_{TARGET_DATASET}/'
+folder_name = checkpoint_path.split('/')[-2]
+folder_name = f'output/{folder_name}/'
 os.system(f'mkdir -p "{folder_name}"')
 
 for inp in all_source.as_numpy_iterator():

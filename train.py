@@ -3,6 +3,8 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--source')
 parser.add_argument('--target')
+parser.add_argument('--source_num_imgs', default=100)
+parser.add_argument('--target_num_imgs', default=75)
 
 opt = parser.parse_args()
 
@@ -25,6 +27,7 @@ AUTOTUNE = tf.data.AUTOTUNE
 
 import numpy as np
 from PIL import Image
+import glob
 
 ############### USER PARAMETERS ###############
 BATCH_SIZE = 1
@@ -32,48 +35,79 @@ IMG_WIDTH = 608
 IMG_HEIGHT = 608
 SOURCE_DATASET = opt.source
 TARGET_DATASET = opt.target
+SOURCE_NUM_IMAGES = int(opt.source_num_imgs)
+TARGET_NUM_IMAGES = int(opt.target_num_imgs)
+
+print(f'Train: src: {SOURCE_DATASET}, targ: {TARGET_DATASET}, src_n: {SOURCE_NUM_IMAGES}, targ_n: {TARGET_NUM_IMAGES}')
 ###############################################
 
 
-############# DATA FILE SPECIFICATION ###################
-src_folders = {
-    'NE': 'Train NE Val NW 100 real 75 syn',
-    'NW': 'Train NW Val NE 100 real 75 syn',
-    'EM': 'Train EM Val EM 100 real 75 syn',
-    'SW': 'Train SW Val EM 100 real 75 syn'
-    }
+## /jitter/wt/images/EM/Real/*.jpg
+## /jitter/wt/images/NE/Background/*.jpg
 
-# Globs the target images
-import glob
+############# DATA FILE SPECIFICATION for original images ###################
+# src_folders = {
+#     'NE': 'Train NE Val NW 100 real 75 syn',
+#     'NW': 'Train NW Val NE 100 real 75 syn',
+#     'EM': 'Train EM Val EM 100 real 75 syn',
+#     'SW': 'Train SW Val EM 100 real 75 syn'
+#     }
+# 
+# # Globs the target images
+# import glob
+# 
+# bg_folders = ['EM', 'NE', 'NW', 'SW']
+# train_targ_filenames = glob.glob(f'colab-cyclegan-data/backgrounds/{TARGET_DATASET}/*')
+# 
+# ## Gets the train_src_filenames from training_img_paths.txt. This current implementation only takes the txt file in the NE domain. 
+# txt_file = './colab-cyclegan-data/' + src_folders[SOURCE_DATASET] + '/baseline/training_img_paths.txt'
+# 
+# with open(txt_file) as f:
+#   lines = f.readlines()
+#   lines = [l.strip() for l in lines]
+#   lines = ['colab-cyclegan-data' + l[2:] for l in lines]
+# 
+# train_src_filenames = lines
+# del lines
+#############################################################
 
-bg_folders = ['EM', 'NE', 'NW', 'SW']
-train_targ_filenames = glob.glob(f'colab-cyclegan-data/backgrounds/{TARGET_DATASET}/*')
+############# DATA FILE SPECIFICATION for jitter images ###################
 
-## Gets the train_src_filenames from training_img_paths.txt. This current implementation only takes the txt file in the NE domain. 
-txt_file = './colab-cyclegan-data/' + src_folders[SOURCE_DATASET] + '/baseline/training_img_paths.txt'
+import json
+json_file = '/work/yl708/bass/cyclegan/colab-cyclegan-data/jitter/domain_overview.json'
 
-with open(txt_file) as f:
-  lines = f.readlines()
-  lines = [l.strip() for l in lines]
-  lines = ['colab-cyclegan-data' + l[2:] for l in lines]
+with open(json_file, 'r') as f:
+    j = json.load(f)
 
-train_src_filenames = lines
-del lines
+src_numbers = j[SOURCE_DATASET]['Real']
+target_numbers = j[TARGET_DATASET]['Background']
+
+train_src_filenames = [f'/work/yl708/bass/cyclegan/colab-cyclegan-data/jitter/images/{SOURCE_DATASET}/Real/{s}.jpg' for s in src_numbers]
+train_targ_filenames = [f'/work/yl708/bass/cyclegan/colab-cyclegan-data/jitter/images/{TARGET_DATASET}/Background/{t}.jpg' for t in target_numbers]
+
+# train_src_filenames = glob.glob(f'/work/yl708/bass/cyclegan/colab-cyclegan-data/jitter/images/{SOURCE_DATASET}/Real/*.jpg')
+# train_targ_filenames = glob.glob(f'/work/yl708/bass/cyclegan/colab-cyclegan-data/jitter/images/{TARGET_DATASET}/Background/*.jpg')
+
+### USE ALL OF THE TRAIN
+train_src_filenames = train_src_filenames[:SOURCE_NUM_IMAGES]
+
+train_targ_filenames = train_targ_filenames[:TARGET_NUM_IMAGES]
+
 #############################################################
 
 import random
 random.shuffle(train_src_filenames)
 
 # selects number of training images equal to the number of images in train_targ, and use the rest as test data
-test_src_filenames = train_src_filenames[len(train_targ_filenames):] 
-train_src_filenames = train_src_filenames[:len(train_targ_filenames)]
-# print(train_src_filenames)
-
-###
+# test_src_filenames = train_src_filenames[len(train_targ_filenames):]
+# train_src_filenames = train_src_filenames[:len(train_targ_filenames)]
+test_src_filenames = train_src_filenames[-30:] ## Choosing the last 30 train souce images as test images
+train_src_filenames = train_src_filenames[:-30]
 
 train_source = tf.data.Dataset.from_tensor_slices((train_src_filenames)) #75 train src images (from total 100)
 train_target = tf.data.Dataset.from_tensor_slices((train_targ_filenames)) # 75 total target background images
 
+print(test_src_filenames)
 test_source = tf.data.Dataset.from_tensor_slices((test_src_filenames)) # 25 "target" src images (the remaining train ones)
 # test_target = tf.data.Dataset.from_tensor_slices((test_targ_filenames)) # dont need it
 
@@ -187,7 +221,7 @@ generator_f_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
 discriminator_x_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
 discriminator_y_optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
 
-checkpoint_path = f"./s_{SOURCE_DATASET}_t_{TARGET_DATASET}_checkpoints/train"
+checkpoint_path = f"./s_{SOURCE_DATASET}_t_{TARGET_DATASET}_sn_{SOURCE_NUM_IMAGES}_tn_{TARGET_NUM_IMAGES}_checkpoints/train"
 
 ckpt = tf.train.Checkpoint(generator_g=generator_g,
                            generator_f=generator_f,

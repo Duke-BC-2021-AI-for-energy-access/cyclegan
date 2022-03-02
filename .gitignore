@@ -3,4 +3,5 @@ colab-cyclegan-data
 pytorch-*
 output
 *.zip
-
+slurm*
+training_scripts/*.sh
