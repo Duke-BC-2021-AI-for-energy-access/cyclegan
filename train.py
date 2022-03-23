@@ -118,13 +118,15 @@ def read_pixel_data(filepath):
   img = tf.io.read_file(filepath)
   img = tf.io.decode_png(img, channels=3)
   img.set_shape([608, 608, 3])
-  img = tf.image.resize(img, [512, 512])
+  img = tf.image.resize(img, [608, 608])
+  #img = tf.image.resize(img, [512, 512])
   return img
   # return filepath
 
 def random_crop(image):
   cropped_image = tf.image.random_crop(
-      image, size=[512, 512, 3])
+      image, size=[608, 608, 3])
+      #image, size=[512, 512, 3])
 
   return cropped_image
 
@@ -137,10 +139,12 @@ def normalize(image):
 def random_jitter(image):
   print(image)
   # resizing to 286 x 286 x 3
-  image = tf.image.resize(image, [560, 560],
+
+  # Originally 560 x 560
+  image = tf.image.resize(image, [665, 665],
                           method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
-  # randomly cropping to 256 x 256 x 3
+  # randomly cropping to 512 x 512 x 3
   image = random_crop(image)
 
   # random mirroring
