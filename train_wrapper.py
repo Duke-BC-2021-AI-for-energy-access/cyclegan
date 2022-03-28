@@ -3,12 +3,13 @@ Runs training script across all pairs of domains among `domains`
 """
 import os
 
-domains = ['EM', 'NE', 'NW', 'SW']
+# domains = ['EM', 'NE', 'NW', 'SW']
 
-for s_domain in domains:
-    for t_domain in domains:
-        if s_domain == t_domain:
-            continue
+domain_pairs = [('EM', 'EM'), ('SW', 'SW'), ('NW', 'SW'), ('NW', 'EM')]
+img_size_pair = (182, 182)
+
+for s_domain, t_domain in domain_pairs:
+        src_n, targ_n = img_size_pair
         # os.system(f'python train.py --source {s_domain} --target {t_domain}')
         s ="""#!/bin/bash
 #SBATCH --mail-type=END,FAIL          # Mail events (NONE, BEGIN, END, FAIL, ALL)
@@ -27,7 +28,7 @@ conda activate cyclegan
 
 """
 
-        s += f'python train.py --source {s_domain} --target {t_domain}\n'
+        s += f'python train.py --source {s_domain} --target {t_domain} --source_num_imgs {src_n} --target_num_imgs {targ_n}\n'
 
-        with open(f'training_scripts/{s_domain}_{t_domain}.sh', 'w') as script:
+        with open(f'training_scripts/{s_domain}_{t_domain}_{src_n}_{targ_n}.sh', 'w') as script:
             script.write(s)
